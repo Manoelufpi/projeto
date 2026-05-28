@@ -67,7 +67,7 @@ reactable(
   searchable = FALSE,
   striped = TRUE,
   filterable = TRUE,
-  defaultPageSize = 5,
+  defaultPageSize = 9,
   columns = list(
     `PIB per Capita (R$)` = colDef(format = colFormat(prefix = "R$ ", separators = TRUE, loc = "pt-BR"))
   )
