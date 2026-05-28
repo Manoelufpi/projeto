@@ -1,0 +1,75 @@
+---
+title: "Produto Interno Bruto em 2021 por Estados"
+---
+
+## Avidade HMTL
+
+Segue os codigos utilizados para gerar o site.
+
+```{r}
+library(sidrar)
+library(tidyverse)
+library(geobr)
+library(sf)
+library(reactable)
+library(scales) 
+
+
+dados_sidra <- get_sidra(x = 5938, variable = 37, period = "2021", geo = "State")
+
+
+pib_estados <- dados_sidra %>%
+  select(
+    cod_uf = `Unidade da Federação (Código)`,
+    estado = `Unidade da Federação`,
+    pib_per_capita = Valor
+  ) %>%
+  mutate(cod_uf = as.numeric(cod_uf))
+
+top_10 <- pib_estados %>%
+  slice_max(order_by = pib_per_capita, n = 10)
+
+
+ggplot(top_10, aes(x = reorder(estado, pib_per_capita), y = pib_per_capita, fill = pib_per_capita)) +
+  geom_col(show.legend = FALSE) +
+  coord_flip() +
+  scale_fill_viridis_c(option = "mako") +
+  scale_y_continuous(labels = label_currency(prefix = "R$ ", big.mark = ".", decimal.mark = ",")) +
+  theme_minimal() +
+  labs(
+    title = "Top 10 Estados por PIB per Capita (2021)",
+    x = "Estado",
+    y = "PIB per Capita"
+  )
+
+
+mapa_estados <- read_state(year = 2020, showProgress = FALSE)
+
+mapa_dados <- mapa_estados %>%
+  left_join(pib_estados, by = c("code_state" = "cod_uf"))
+
+ggplot(mapa_dados) +
+  geom_sf(aes(fill = pib_per_capita), color = "white", size = 0.1) +
+  scale_fill_viridis_c(
+    name = "PIB per Capita", 
+    option = "plasma",
+    labels = label_currency(prefix = "R$ ", big.mark = ".", decimal.mark = ",")
+  ) +
+  theme_void() +
+  labs(
+    title = "PIB per Capita por Unidade da Federação",
+    subtitle = "Ano de referência: 2021"
+  )
+
+
+reactable(
+  pib_estados %>% select(Estado = estado, `PIB per Capita (R$)` = pib_per_capita),
+  searchable = FALSE,
+  striped = TRUE,
+  filterable = TRUE,
+  defaultPageSize = 5,
+  columns = list(
+    `PIB per Capita (R$)` = colDef(format = colFormat(prefix = "R$ ", separators = TRUE, loc = "pt-BR"))
+  )
+)
+```
